@@ -2,7 +2,11 @@
 # API connector for stein.app
 
 import requests
+from http.cookiejar import LWPCookieJar
 import re
+
+COOKIE_FILENAME='/tmp/stein-cookie'
+BUNAME = "Paderborn"
 
 class SteinAPI:
     """Holds the connection to THW stein.app
@@ -15,6 +19,8 @@ class SteinAPI:
         The api endpoint
     apikey : str
         This might be a key to authenticate the web app, just copied
+    buid : dict
+        Dictionary holding the data of the business unit
     headers : dict
         Set common headers
     cookie : RequestsCookieJar
@@ -23,30 +29,44 @@ class SteinAPI:
         Basic app data
     userinfo : dict
         Userinformation 
-    assets : dict
-        The assets of the business unit
-
+    STATES : dict
+        A dict with a translation of the internal used states to human friendly states
+    ASSET_FIELDS : dict
+        A dict with a translation of the asset fields to human friendly names
 
     Available methods:
     ------------------
     __init__(self) -> None
     connect(self, user: str, password: str) -> bool
     logout(self) -> bool
-    getAppData(self) -> None
     getAssets(self) -> None
     updateAsset(self, id : int, update : dict, notify : bool = False) -> bool
 
     """
     baseurl = "https://stein.app"
     apiurl = baseurl + "/api/api"
+    buid = dict()
     apikey = str()
     headers = dict()
     cookie = None
     data = dict()
     userinfo = dict()
-    assets = dict()
+    session = None
 
+    STATES = {"ready": "Einsatzbereit",
+          "notready": "Nicht einsatzbereit",
+          "semiready": "Bedingt einsatzbereit",
+          "inuse": "Im Einsatz",
+          "maint": "In der Werkstatt"}
 
+    ASSET_FIELDS = {"category": "Gruppe",
+                "comment": "Kommentar",
+                "group": "Kategorie",
+                "issi": "ISSI",
+                "label": "Bezeichnung",
+                "plate": "Kennzeichen",
+                "radio": "Funkrufname",
+                "status": "Status"}
 
     def __init__(self) -> None:
         """Create the SteinAPI object and set the api endpoint
@@ -73,6 +93,8 @@ class SteinAPI:
         else:
             raise ValueError('Could not find java script file to determine api key')
 
+
+
     def connect(self, user: str, password: str) -> bool:
         """Create connection and authenticate against stein.api
 
@@ -83,19 +105,28 @@ class SteinAPI:
         password : str
             The password used for authentication
         """
-        payload = { "username" : user, "password" : password}
-        url = self.apiurl + "/login_check"
-        r = requests.post(url, headers=self.headers, json=payload)
-        self.cookie = r.cookies
-        if r.cookies['Token']:
-            url = self.apiurl + "/userinfo"
-            r = requests.get(url, headers=self.headers, cookies=self.cookie)
-            self.userinfo = r.json()
-            self.userinfo.update({"bu" : self.userinfo['scope'].split('_')[1]})
-            print(self.userinfo)
-            return True
-        else:
-            return False
+
+        # Try to load saved cookie
+        cookie_jar = LWPCookieJar(COOKIE_FILENAME)
+        try:
+            cookie_jar.load()
+        except FileNotFoundError:
+            pass
+
+        self.session = requests.Session()
+        self.session.cookies = cookie_jar
+
+        self.userinfo = self.session.get(self.apiurl + "/userinfo").json()
+        if "name" not in self.userinfo:
+            payload = { "username" : user, "password" : password}
+            login = self.session.post(self.apiurl + "/login_check", json=payload)
+            login.raise_for_status()
+            self.userinfo = self.session.get(self.apiurl + "/userinfo").json()
+
+        self.data = self.session.get(self.apiurl + "/app/data", headers=self.headers, cookies=self.cookie).json()
+        self.bu = next(filter(lambda bu: bu["name"] == BUNAME, self.data["bus"]))
+
+        cookie_jar.save(ignore_discard=True)
 
     def logout(self) -> bool:
         """Logout from stein.app
@@ -106,23 +137,16 @@ class SteinAPI:
             Returns true if logout was successfull
         """
         url = self.apiurl + "/logout"
-        r = requests.post(url, headers=self.headers, cookies=self.cookie)
+        r = self.session.post(url, headers=self.headers, cookies=self.cookie)
         if r.status_code == 204:
             return True
         else:
             return False
 
-    def getAppData(self) -> None:
-        """Retrieves basic app data from stein.app"""
-        url = self.apiurl + "/app/data"
-        r = requests.get(url, headers=self.headers, cookies=self.cookie)
-        self.data = r.json()
-
-    def getAssets(self) -> None:
+    def getAssets(self) -> dict:
         """Get assets from stein.app"""
-        url = self.apiurl + "/assets?buIds=" + str(self.userinfo['bu'])
-        r = requests.get(url, headers=self.headers, cookies=self.cookie)
-        self.assets = r.json()
+        url = self.apiurl + "/assets?buIds=" + str(self.bu['id'])
+        return self.session.get(url, headers=self.headers, cookies=self.cookie).json()
 
     def updateAsset(self, id : int, update : dict, notify : bool = False) -> bool:
         """Set update asset data
@@ -175,7 +199,7 @@ class SteinAPI:
             else:
                 url = url + "?notifyRadio=false"
             print(url)
-            r = requests.patch(url, json=data, headers=self.headers, cookies=self.cookie)
+            r = self.session.patch(url, json=data, headers=self.headers, cookies=self.cookie)
             if r.status_code == 200:
                 return True
 
@@ -183,9 +207,7 @@ class SteinAPI:
 
 if __name__ == "__main__":
     s = SteinAPI()
-    s.connect("<user>", "<api>")
-    s.getAppData()
-    s.getAssets()
-    print(s.assets)
+    s.connect("<user>", "<pass>")
+    print(s.getAssets())
 #    s.updateAsset(<id>, {"status" : "ready", "comment" : ""})
-    s.logout()
+    #s.logout()

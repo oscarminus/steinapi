@@ -19,7 +19,7 @@ class SteinAPI:
         The api endpoint
     apikey : str
         This might be a key to authenticate the web app, just copied
-    buid : dict
+    bu : dict
         Dictionary holding the data of the business unit
     headers : dict
         Set common headers
@@ -45,7 +45,7 @@ class SteinAPI:
     """
     baseurl = "https://stein.app"
     apiurl = baseurl + "/api/api"
-    buid = dict()
+    bu = dict()
     apikey = str()
     headers = dict()
     cookie = None
@@ -143,6 +143,14 @@ class SteinAPI:
         else:
             return False
 
+    def getBuData(self) -> dict:
+        """Return the business unit"""
+        return self.bu
+
+    def getGroups(self) -> dict:
+        """Return groups of assets"""
+        return {group["id"]: group["name"] for group in self.data["assetGroups"]}
+
     def getAssets(self) -> dict:
         """Get assets from stein.app"""
         url = self.apiurl + "/assets?buIds=" + str(self.bu['id'])
@@ -183,7 +191,7 @@ class SteinAPI:
         """
 
         assetdata = None
-        for a in self.assets:
+        for a in self.getAssets():
             if a['id'] == id:
                 assetdata = a
             

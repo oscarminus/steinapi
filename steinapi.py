@@ -6,7 +6,6 @@ from http.cookiejar import LWPCookieJar
 import re
 
 COOKIE_FILENAME='/tmp/stein-cookie'
-BUNAME = "Paderborn"
 
 class SteinAPI:
     """Holds the connection to THW stein.app
@@ -19,6 +18,8 @@ class SteinAPI:
         The api endpoint
     apikey : str
         This might be a key to authenticate the web app, just copied
+    buname : str
+        The name of the business unit
     bu : dict
         Dictionary holding the data of the business unit
     headers : dict
@@ -36,7 +37,7 @@ class SteinAPI:
 
     Available methods:
     ------------------
-    __init__(self) -> None
+    __init__(self, buname: str) -> None
     connect(self, user: str, password: str) -> bool
     logout(self) -> bool
     getAssets(self) -> None
@@ -46,6 +47,7 @@ class SteinAPI:
     baseurl = "https://stein.app"
     apiurl = baseurl + "/api/api"
     bu = dict()
+    buname = ""
     apikey = str()
     headers = dict()
     cookie = None
@@ -68,7 +70,7 @@ class SteinAPI:
                 "radio": "Funkrufname",
                 "status": "Status"}
 
-    def __init__(self) -> None:
+    def __init__(self, buname: str) -> None:
         """Create the SteinAPI object and set the api endpoint
         """
         # get initial web page and read main java script file
@@ -92,7 +94,8 @@ class SteinAPI:
                 raise ValueError('Could not find API-Key in java script file')
         else:
             raise ValueError('Could not find java script file to determine api key')
-
+        
+        self.buname = buname
 
 
     def connect(self, user: str, password: str) -> bool:
@@ -124,7 +127,7 @@ class SteinAPI:
             self.userinfo = self.session.get(self.apiurl + "/userinfo").json()
 
         self.data = self.session.get(self.apiurl + "/app/data", headers=self.headers, cookies=self.cookie).json()
-        self.bu = next(filter(lambda bu: bu["name"] == BUNAME, self.data["bus"]))
+        self.bu = next(filter(lambda bu: bu["name"] == self.buname, self.data["bus"]))
 
         cookie_jar.save(ignore_discard=True)
 
@@ -214,7 +217,7 @@ class SteinAPI:
         return False
 
 if __name__ == "__main__":
-    s = SteinAPI()
+    s = SteinAPI("Paderborn")
     s.connect("<user>", "<pass>")
     print(s.getAssets())
 #    s.updateAsset(<id>, {"status" : "ready", "comment" : ""})

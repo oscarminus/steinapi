@@ -7,7 +7,6 @@ from datetime import datetime
 import argparse
 import json
 
-ACCESSKEY = "fymLWYCl5MFZUjLRxJE76XyqMtka8Dx6yM9zxfyq1yJHJScIXOl1b3vXvwRhtLnL"
 URL = "https://app.divera247.com/api/v2/"
 
 FMSSTEIN = {

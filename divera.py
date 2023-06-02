@@ -28,13 +28,15 @@ def convertToUnixTs(string : str) -> int:
     dt = datetime.strptime(string, '%Y-%m-%dT%H:%M:%S')
     return int(dt.strftime('%s'))
 
+
 def setDataDivera(id, data):
     payload = {
         'status' : FMSSTEIN[data['status']],
         'status_id' : FMSSTEIN[data['status']]
     }
     if data['comment']:
-        payload.update({'fmsstatus_note' : data['comment']})
+        comment_without_linebreaks = data['comment'].replace('\n', ' ')  # Replace line breaks with spaces
+        payload.update({'status_note' : comment_without_linebreaks})
 
     r = requests.post(URL + "using-vehicles/set-status/" + str(id) + "?accesskey=" + config['divera']['accesskey'], json=payload)
     r.raise_for_status()

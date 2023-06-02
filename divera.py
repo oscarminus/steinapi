@@ -36,10 +36,7 @@ def setDataDivera(id, data):
     }
     if data['comment']:
         comment_without_linebreaks = data['comment'].replace('\n', ' ')  # Replace line breaks with spaces
-        print("Comment: %s" % (comment_without_linebreaks))
         payload.update({'status_note' : comment_without_linebreaks})
-
-    print("Payload: ", payload)
 
     r = requests.post(URL + "using-vehicles/set-status/" + str(id) + "?accesskey=" + config['divera']['accesskey'], json=payload)
     r.raise_for_status()

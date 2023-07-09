@@ -15,7 +15,7 @@ Ziel des Projekt ist die synchronisierung zwischen Stein.APP und Divera 24/7.
 ## Docker
 ```shell
 docker build -t steinapi .
-docker run -d -v <config_folder>:/app/config steinapi --config /app/config/config.json
+docker run -ti --rm -v <config_folder>:/app/config steinapi --config /app/config/config.json
 ```
 
 # Hinweis

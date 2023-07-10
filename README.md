@@ -12,5 +12,11 @@ Ziel des Projekt ist die synchronisierung zwischen Stein.APP und Divera 24/7.
     1. Stein: Hier die Nutzerdaten des angelegten Benutzers eintragen. Unter "buname" wird der Name der Organisationseinheit eingetragen. Dies ist der Name des OVs ohne Dienststellenkürzel. Also "Paderborn" für OV Paderborn.
 1. Anschließend das script divera.py aufrufen. 
 
+## Docker
+```shell
+docker build -t steinapi .
+docker run -ti --rm -v <config_folder>:/app/config steinapi --config /app/config/config.json
+```
+
 # Hinweis
 Das Projekt habe ich in meiner Freizeit für unseren OV geschrieben. Aufgrund der Nachfrage habe ich es dann auf GitHub veröffentlicht. Sämtlicher Code versteht sich ohne irgendwelche Haftung. Falls Fehler gefunden werden, gerne im Bugtracker melden. Ich freue mich auch über merge requests :)

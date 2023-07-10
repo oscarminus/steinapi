@@ -214,7 +214,8 @@ class SteinAPI:
             r = self.session.patch(url, json=data, headers=self.headers, cookies=self.cookie)
             if r.status_code == 200:
                 return True
-
+            else:
+                logging.warning("Could not set data. Return code was %s, message: %s" % (r.status_code, r.text))
         return False
 
 if __name__ == "__main__":

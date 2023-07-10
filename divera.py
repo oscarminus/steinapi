@@ -6,6 +6,7 @@ import steinapi
 from datetime import datetime
 import argparse
 import json
+import logging
 
 URL = "https://app.divera247.com/api/v2/"
 
@@ -47,21 +48,32 @@ if __name__ == "__main__":
     # Read options and configuration
     parser = argparse.ArgumentParser(prog='Divera sync', description="Synchronisiert Divera mit Stein.app")
     parser.add_argument("--config", "-c", default="config.json", help="Pfad zur Konfigdatei.")
+    parser.add_argument("--debug", "-d", action='store_true')
     args = parser.parse_args()
 
+    # set up logging
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    else:
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+    logging.debug("Lade config file %s" % args.config)
     config = dict()
     with open(args.config) as f:
         config = json.load(f)
 
     # get data from Divera
+    logging.debug("Lese Daten von Divera")
     r = requests.get(URL + "pull/vehicle-status?accesskey=" + config['divera']['accesskey'])
     data = r.json()['data']
     assets_divera = dict()
     for d in data:
         if d['number'] != '':
             assets_divera.update({d['number'] : d})
-    
+    logging.debug("Assets in Divera: %s" % str(assets_divera))
+
     # get data from stein
+    logging.debug("Lese Daten von Stein")
     s = steinapi.SteinAPI(config['stein']['buname'])
     s.connect(config['stein']['user'], config['stein']['password'])
     data = s.getAssets()
@@ -69,6 +81,7 @@ if __name__ == "__main__":
     for d in data:
         if d['groupId'] in [1, 5]:
             assets_stein.update({d['name'] : d})
+    logging.debug("Assets in Stein: %s" % str(assets_stein))
 
     for k,data_stein in assets_stein.items():
         if k not in assets_divera:
@@ -76,11 +89,13 @@ if __name__ == "__main__":
 
         data_divera = assets_divera[k]
         if data_divera['fmsstatus'] != FMSSTEIN[data_stein['status']]:
-            print("Unterschied: Fahrzeug %s, Status Divera %s, Status Stein %s" % (data_divera['name'], data_divera['fmsstatus'], data_stein['status']))
+            
             if convertToUnixTs(data_stein['lastModified']) > data_divera['fmsstatus_ts']:
                 # Stein ist das aktuellere Datum
+                logging.info("Neue Daten in Stein: Fahrzeug %s, Status Divera %s, Status Stein %s" % (data_divera['name'], data_divera['fmsstatus'], data_stein['status']))
                 setDataDivera(data_divera['id'], data_stein)
             else:
+                logging.info("Neue Daten in Divera: Fahrzeug %s, Status Divera %s, Status Stein %s" % (data_divera['name'], data_divera['fmsstatus'], data_stein['status']))
                 payload = {
                     'status' : FMSSTEIN[data_divera['fmsstatus']],
                     'comment' : data_divera['fmsstatus_note']

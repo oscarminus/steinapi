@@ -4,6 +4,7 @@
 import requests
 from http.cookiejar import LWPCookieJar
 import re
+import logging
 
 COOKIE_FILENAME='/tmp/stein-cookie'
 
@@ -203,13 +204,13 @@ class SteinAPI:
             if "id" in update:
                 del update['id']
             data = assetdata | update
-            print(data)
+            logging.debug("Payload: %s" % str(data))
             url = self.apiurl + "/assets/" + str(assetdata['id'])
             if notify:
                 url = url + "?notifyRadio=true"
             else:
                 url = url + "?notifyRadio=false"
-            print(url)
+            logging.debug("Url: %s" % url)
             r = self.session.patch(url, json=data, headers=self.headers, cookies=self.cookie)
             if r.status_code == 200:
                 return True

@@ -203,15 +203,15 @@ class SteinAPI:
             # remove id from the update data. Otherwise we would overwrite another asset
             if "id" in update:
                 del update['id']
-            data = assetdata | update
-            logging.debug("Payload: %s" % str(data))
+            assetdata.update(update)
+            logging.debug("Payload: %s" % str(assetdata))
             url = self.apiurl + "/assets/" + str(assetdata['id'])
             if notify:
                 url = url + "?notifyRadio=true"
             else:
                 url = url + "?notifyRadio=false"
             logging.debug("Url: %s" % url)
-            r = self.session.patch(url, json=data, headers=self.headers, cookies=self.cookie)
+            r = self.session.patch(url, json=assetdata, headers=self.headers, cookies=self.cookie)
             if r.status_code == 200:
                 return True
             else:

@@ -7,6 +7,7 @@ from datetime import datetime
 import argparse
 import json
 import logging
+import sys
 
 URL = "https://app.divera247.com/api/v2/"
 
@@ -57,6 +58,7 @@ if __name__ == "__main__":
     else:
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+    logging.debug("Python version: %s" % sys.version)
     logging.debug("Lade config file %s" % args.config)
     config = dict()
     with open(args.config) as f:

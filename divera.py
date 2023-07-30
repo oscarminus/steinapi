@@ -36,9 +36,11 @@ def setDataDivera(id, data):
         'status' : FMSSTEIN[data['status']],
         'status_id' : FMSSTEIN[data['status']]
     }
-    if data['comment']:
+    if 'comment' in data:
         comment_without_linebreaks = data['comment'].replace('\n', ' ')  # Replace line breaks with spaces
         payload.update({'status_note' : comment_without_linebreaks})
+    
+    logging.debug("Payload: %s" % str(payload))
 
     r = requests.post(URL + "using-vehicles/set-status/" + str(id) + "?accesskey=" + config['divera']['accesskey'], json=payload)
     r.raise_for_status()
@@ -90,14 +92,17 @@ if __name__ == "__main__":
             continue
 
         data_divera = assets_divera[k]
-        if data_divera['fmsstatus'] != FMSSTEIN[data_stein['status']]:
+        # normalize comment to empty string
+        if data_stein['comment'] == None:
+            data_stein['comment'] = ''
+        if data_divera['fmsstatus'] != FMSSTEIN[data_stein['status']] or data_divera['fmsstatus_note'] != data_stein['comment']:
             
             if convertToUnixTs(data_stein['lastModified']) > data_divera['fmsstatus_ts']:
                 # Stein ist das aktuellere Datum
-                logging.info("Neue Daten in Stein: Fahrzeug %s, Status Divera %s, Status Stein %s" % (data_divera['name'], data_divera['fmsstatus'], data_stein['status']))
+                logging.info("Neue Daten in Stein: Fahrzeug %s, Status Divera %s, Status Stein %s, Text Divera '%s', Text Stein '%s'" % (data_divera['name'], data_divera['fmsstatus'], data_stein['status'], data_divera['fmsstatus_note'], data_stein['comment']))
                 setDataDivera(data_divera['id'], data_stein)
             else:
-                logging.info("Neue Daten in Divera: Fahrzeug %s, Status Divera %s, Status Stein %s" % (data_divera['name'], data_divera['fmsstatus'], data_stein['status']))
+                logging.info("Neue Daten in Divera: Fahrzeug %s, Status Divera %s, Status Stein %s, Text Divera '%s', Text Stein '%s'" % (data_divera['name'], data_divera['fmsstatus'], data_stein['status'], data_divera['fmsstatus_note'], data_stein['comment']))
                 payload = {
                     'status' : FMSSTEIN[data_divera['fmsstatus']],
                     'comment' : data_divera['fmsstatus_note']

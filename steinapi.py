@@ -77,7 +77,7 @@ class SteinAPI:
         # get initial web page and read main java script file
         # extract the api key from the java script file
         r = requests.get(self.baseurl)
-        m = re.search(r'<script defer=\"defer\" src=\"([\w\/\.]+)\">', r.text)
+        m = re.search(r'<script type=\"module\" crossorigin src=\"([\w\/\.\-]+)\"></script>', r.text)
         if m:
             js = m.group(1)
             j = requests.get(self.baseurl + "/" + js)

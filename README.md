@@ -1,6 +1,22 @@
 # steinapi
 Ziel des Projekt ist die synchronisierung zwischen Stein.APP und Divera 24/7.
 
+## Systemumgebug
+Der Code wurde auf Debian Linux 12 (Bookworm) und macOS getestet. Zusätzlich zur Standard-Python-Installation wird das httpx-Paket mit HTTP/2 support genutzt. 
+
+### Installation unter Debian
+```shell
+apt install python3-httpx python3-h2
+```
+
+### Installation auf macOS
+Ausgangslage: Python3 per Homebrew installiert
+```shell
+python3 -m venv .venv
+source .venv/bin/activate
+pip3 install "httpx[http2]"
+```
+
 ## Einrichtung
 1. Voarb: Zunächst werden je ein Nutzer in Stein.APP und Divera 24/7 benötigt.
     1. Divera 24/7: Im Menüpunkt Verwaltung -> Schnittstellen -> System-Benutzer muss ein neuer System-Benutzer angelegt werden. Der dabei generierte Accesskey wird gleich benötigt.

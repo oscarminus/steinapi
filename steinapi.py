@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # API connector for stein.app
 
-import requests
+import httpx
 from http.cookiejar import LWPCookieJar
 import re
 import logging
@@ -71,16 +71,19 @@ class SteinAPI:
                 "radio": "Funkrufname",
                 "status": "Status"}
 
+
+
     def __init__(self, buname: str) -> None:
         """Create the SteinAPI object and set the api endpoint
         """
         # get initial web page and read main java script file
         # extract the api key from the java script file
-        r = requests.get(self.baseurl)
+        httpcl = httpx.Client(http2=True)
+        r = httpcl.get(self.baseurl)
         m = re.search(r'<script type=\"module\" crossorigin src=\"([\w\/\.\-]+)\"></script>', r.text)
         if m:
             js = m.group(1)
-            j = requests.get(self.baseurl + "/" + js)
+            j = httpcl.get(self.baseurl + "/" + js)
             m = None
             m = re.search(r'headers\.common\[\"X-API-KEY\"]=\"(\w+)\"', j.text)
             if m:
@@ -91,6 +94,7 @@ class SteinAPI:
                     "Pragma" : "no-cache",
                     "Cache-Control" : "no-cache, no-store",
                     "X-API-KEY" : self.apikey}
+                print(self.headers)
             else:
                 raise ValueError('Could not find API-Key in java script file')
         else:
@@ -117,17 +121,20 @@ class SteinAPI:
         except FileNotFoundError:
             pass
 
-        self.session = requests.Session()
+        self.session = httpx.Client(http2=True)
         self.session.cookies = cookie_jar
 
-        self.userinfo = self.session.get(self.apiurl + "/userinfo").json()
+        self.userinfo = self.session.get(self.apiurl + "/userinfo")
+        self.userinfo = self.userinfo.json()
         if "name" not in self.userinfo:
             payload = { "username" : user, "password" : password}
             login = self.session.post(self.apiurl + "/login_check", json=payload)
             login.raise_for_status()
-            self.userinfo = self.session.get(self.apiurl + "/userinfo").json()
+            self.userinfo = self.session.get(self.apiurl + "/userinfo")
+            self.userinfo = self.userinfo.json()
 
-        self.data = self.session.get(self.apiurl + "/app/data", headers=self.headers, cookies=self.cookie).json()
+        self.data = self.session.get(self.apiurl + "/app/data", headers=self.headers, cookies=self.cookie)
+        self.data = self.data.json()
         self.bu = next(filter(lambda bu: bu["name"] == self.buname, self.data["bus"]))
 
         cookie_jar.save(ignore_discard=True)
@@ -157,8 +164,9 @@ class SteinAPI:
 
     def getAssets(self) -> dict:
         """Get assets from stein.app"""
-        url = self.apiurl + "/assets?buIds=" + str(self.bu['id'])
-        return self.session.get(url, headers=self.headers, cookies=self.cookie).json()
+        url = self.apiurl + "/assets/?buIds=" + str(self.bu['id'])
+        temp = self.session.get(url, headers=self.headers, cookies=self.cookie)
+        return temp.json()
 
     def updateAsset(self, id : int, update : dict, notify : bool = False) -> bool:
         """Set update asset data

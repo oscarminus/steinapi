@@ -94,7 +94,6 @@ class SteinAPI:
                     "Pragma" : "no-cache",
                     "Cache-Control" : "no-cache, no-store",
                     "X-API-KEY" : self.apikey}
-                print(self.headers)
             else:
                 raise ValueError('Could not find API-Key in java script file')
         else:

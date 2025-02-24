@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import requests
+import httpx
 from pprint import pprint
 import steinapi
 from datetime import datetime
@@ -42,7 +42,8 @@ def setDataDivera(id, data):
     
     logging.debug("Payload: %s" % str(payload))
 
-    r = requests.post(URL + "using-vehicles/set-status/" + str(id) + "?accesskey=" + config['divera']['accesskey'], json=payload)
+    htclient = httpx.Client(http2=True)
+    r = htclient.post(URL + "using-vehicles/set-status/" + str(id) + "?accesskey=" + config['divera']['accesskey'], json=payload)
     r.raise_for_status()
     return r.json()
 
@@ -68,7 +69,8 @@ if __name__ == "__main__":
 
     # get data from Divera
     logging.debug("Lese Daten von Divera")
-    r = requests.get(URL + "pull/vehicle-status?accesskey=" + config['divera']['accesskey'])
+    htclient = httpx.Client(http2=True)
+    r = htclient.get(URL + "pull/vehicle-status?accesskey=" + config['divera']['accesskey'])
     data = r.json()['data']
     assets_divera = dict()
     for d in data:

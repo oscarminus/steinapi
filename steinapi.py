@@ -134,7 +134,7 @@ class SteinAPI:
             self.userinfo = self.session.get(self.apiurl + "/userinfo", headers=self.DEFAULT_HEADERS)
             self.userinfo = self.userinfo.json()
 
-        self.data = self.session.get(self.apiurl + "/app/data", headers=self.DEFAULT_HEADERS, cookies=self.cookie)
+        self.data = self.session.get(self.apiurl + "/app/data", headers=self.headers, cookies=self.cookie)
         self.data = self.data.json()
         self.bu = next(filter(lambda bu: bu["name"] == self.buname, self.data["bus"]))
 

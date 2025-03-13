@@ -71,7 +71,9 @@ class SteinAPI:
                 "radio": "Funkrufname",
                 "status": "Status"}
 
-
+    DEFAULT_HEADERS = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
+    }
 
     def __init__(self, buname: str) -> None:
         """Create the SteinAPI object and set the api endpoint
@@ -79,21 +81,21 @@ class SteinAPI:
         # get initial web page and read main java script file
         # extract the api key from the java script file
         httpcl = httpx.Client(http2=True)
-        r = httpcl.get(self.baseurl)
-        m = re.search(r'<script type=\"module\" crossorigin src=\"([\w\/\.\-]+)\"></script>', r.text)
+        r = httpcl.get(self.baseurl, headers=self.DEFAULT_HEADERS)
+        m = re.search(r'<script type=\"module\" crossorigin src=\"([\w/.\-]+)\"></script>', r.text)
         if m:
             js = m.group(1)
-            j = httpcl.get(self.baseurl + "/" + js)
+            j = httpcl.get(self.baseurl + "/" + js, headers=self.DEFAULT_HEADERS)
             m = None
             m = re.search(r'headers\.common\[\"X-API-KEY\"]=\"(\w+)\"', j.text)
             if m:
                 self.apikey = m.group(1)
-                self.headers = { 
-                    "accept" : "application/json, text/plain, */*",
-                    "content-type" : "application/json",
-                    "Pragma" : "no-cache",
-                    "Cache-Control" : "no-cache, no-store",
-                    "X-API-KEY" : self.apikey}
+                self.headers = self.DEFAULT_HEADERS | {
+                    "accept": "application/json, text/plain, */*",
+                    "content-type": "application/json",
+                    "Pragma": "no-cache",
+                    "Cache-Control": "no-cache, no-store",
+                    "X-API-KEY": self.apikey}
             else:
                 raise ValueError('Could not find API-Key in java script file')
         else:
@@ -102,7 +104,7 @@ class SteinAPI:
         self.buname = buname
 
 
-    def connect(self, user: str, password: str) -> bool:
+    def connect(self, user: str, password: str):
         """Create connection and authenticate against stein.api
 
         Parameters:
@@ -123,16 +125,16 @@ class SteinAPI:
         self.session = httpx.Client(http2=True)
         self.session.cookies = cookie_jar
 
-        self.userinfo = self.session.get(self.apiurl + "/userinfo")
+        self.userinfo = self.session.get(self.apiurl + "/userinfo", headers=self.DEFAULT_HEADERS)
         self.userinfo = self.userinfo.json()
         if "name" not in self.userinfo:
-            payload = { "username" : user, "password" : password}
-            login = self.session.post(self.apiurl + "/login_check", json=payload)
+            payload = {"username" : user, "password" : password}
+            login = self.session.post(self.apiurl + "/login_check", json=payload, headers=self.DEFAULT_HEADERS)
             login.raise_for_status()
-            self.userinfo = self.session.get(self.apiurl + "/userinfo")
+            self.userinfo = self.session.get(self.apiurl + "/userinfo", headers=self.DEFAULT_HEADERS)
             self.userinfo = self.userinfo.json()
 
-        self.data = self.session.get(self.apiurl + "/app/data", headers=self.headers, cookies=self.cookie)
+        self.data = self.session.get(self.apiurl + "/app/data", headers=self.DEFAULT_HEADERS, cookies=self.cookie)
         self.data = self.data.json()
         self.bu = next(filter(lambda bu: bu["name"] == self.buname, self.data["bus"]))
 

@@ -52,7 +52,8 @@ if __name__ == "__main__":
     # Read options and configuration
     parser = argparse.ArgumentParser(prog='Divera sync', description="Synchronisiert Divera mit Stein.app")
     parser.add_argument("--config", "-c", default="config.json", help="Pfad zur Konfigdatei.")
-    parser.add_argument("--debug", "-d", action='store_true')
+    parser.add_argument("--debug", "-d", action='store_true', help="Debug Modus")
+    parser.add_argument("--direction", choices=['divera', 'stein', 'both'], default='both', help="In welche Richtung soll synchronisiert werden? both ist default")
     args = parser.parse_args()
 
     # set up logging
@@ -98,13 +99,28 @@ if __name__ == "__main__":
         if data_stein['comment'] == None:
             data_stein['comment'] = ''
         if data_divera['fmsstatus'] != FMSSTEIN[data_stein['status']] or data_divera['fmsstatus_note'] != data_stein['comment']:
-            
-            if convertToUnixTs(data_stein['lastModified']) > data_divera['fmsstatus_ts']:
-                # Stein ist das aktuellere Datum
-                logging.info("Neue Daten in Stein: Fahrzeug %s, Status Divera %s, Status Stein %s, Text Divera '%s', Text Stein '%s'" % (data_divera['name'], data_divera['fmsstatus'], data_stein['status'], data_divera['fmsstatus_note'], data_stein['comment']))
+
+            if args.direction == 'both':
+                # in beide Richtungen, je nachdem wer da aktuellere Datum hat
+                if convertToUnixTs(data_stein['lastModified']) > data_divera['fmsstatus_ts']:
+                    # Stein ist das aktuellere Datum
+                    logging.info("Neue Daten in Stein: Fahrzeug %s, Status Divera %s, Status Stein %s, Text Divera '%s', Text Stein '%s'" % (data_divera['name'], data_divera['fmsstatus'], data_stein['status'], data_divera['fmsstatus_note'], data_stein['comment']))
+                    setDataDivera(data_divera['id'], data_stein)
+                else:
+                    logging.info("Neue Daten in Divera: Fahrzeug %s, Status Divera %s, Status Stein %s, Text Divera '%s', Text Stein '%s'" % (data_divera['name'], data_divera['fmsstatus'], data_stein['status'], data_divera['fmsstatus_note'], data_stein['comment']))
+                    payload = {
+                        'status' : FMSSTEIN[data_divera['fmsstatus']],
+                        'comment' : data_divera['fmsstatus_note']
+                    }
+                    s.updateAsset(data_stein['id'], payload)
+
+            elif args.direction == 'divera':
+                # Überschreibe Daten in Divera
+                logging.info("Überschreibe Daten in Divera: Fahrzeug %s, Status Divera %s, Status Stein %s, Text Divera '%s', Text Stein '%s'" % (data_divera['name'], data_divera['fmsstatus'], data_stein['status'], data_divera['fmsstatus_note'], data_stein['comment']))
                 setDataDivera(data_divera['id'], data_stein)
-            else:
-                logging.info("Neue Daten in Divera: Fahrzeug %s, Status Divera %s, Status Stein %s, Text Divera '%s', Text Stein '%s'" % (data_divera['name'], data_divera['fmsstatus'], data_stein['status'], data_divera['fmsstatus_note'], data_stein['comment']))
+            elif args.direction == 'stein':
+                # Überschreibe Daten in Stein
+                logging.info("Überschreibe Daten in Stein: Fahrzeug %s, Status Divera %s, Status Stein %s, Text Divera '%s', Text Stein '%s'" % (data_divera['name'], data_divera['fmsstatus'], data_stein['status'], data_divera['fmsstatus_note'], data_stein['comment']))
                 payload = {
                     'status' : FMSSTEIN[data_divera['fmsstatus']],
                     'comment' : data_divera['fmsstatus_note']

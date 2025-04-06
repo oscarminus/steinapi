@@ -18,7 +18,7 @@ FMSSTEIN = {
     4: 'inuse',
     6: 'notready',
     'ready': 2,
-    'semiready': 6,
+    'semiready': 1,
     'notready': 6,
     'inuse': 3,
     'maint': 6

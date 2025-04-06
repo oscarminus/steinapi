@@ -42,15 +42,15 @@ class SteinAPI:
         for a in self.get_assets():
             if a['id'] == asset_id:
                 assetdata = a
-        # Add all required fields to update_data if not already present
-        for s in ["buId", "groupId", "label", "status"]: 
-            if s not in update_data:
-                update_data.update({s: assetdata[s]})
+        if "id" in update_data:
+            del update_data["id"]
+        # update old assetdata
+        assetdata.update(update_data)
         
         self._rate_limit()
         url = f"{self.baseurl}/assets/{asset_id}"
         params = {'notifyRadio': str(notify).lower()}
-        response = self.session.patch(url, json=update_data, params=params)
+        response = self.session.patch(url, json=assetdata, params=params)
         if response.status_code == 200:
             return True
         else:

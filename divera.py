@@ -26,10 +26,8 @@ FMSSTEIN = {
 
 
 def convertToUnixTs(string: str) -> int:
-    string = string.split('+')[0]
-    dt = datetime.strptime(string, '%Y-%m-%dT%H:%M:%S')
-    return int(dt.strftime('%s'))
-
+    return int(datetime.fromisoformat(string).strftime('%s'))
+    
 
 def setDataDivera(id, data):
     payload = {

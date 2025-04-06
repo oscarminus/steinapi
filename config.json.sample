@@ -3,8 +3,7 @@
         "accesskey" : "<accesskey>"
     },
     "stein" : {
-        "user" : "",
-        "password" : "",
-        "buname" : ""
+        "buname" : "your_BU_ID",
+		"apikey" : "your_api_key"
     }
 }

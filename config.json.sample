@@ -4,6 +4,6 @@
     },
     "stein" : {
         "buname" : "your_BU_ID",
-		"apikey" : "your_api_key"
+	"apikey" : "your_api_key"
     }
 }

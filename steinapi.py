@@ -16,6 +16,7 @@ class SteinAPI:
             'Authorization': f'Bearer {api_key}'  # use Bearer token format
         })
         self.last_request_time = 0
+        self.assets = []
 
     def _rate_limit(self):
         """Ensure we don't exceed the rate limit of 20 requests per minute."""
@@ -27,14 +28,25 @@ class SteinAPI:
 
     def get_assets(self) -> dict:
         """Fetch assets for the business unit."""
-        self._rate_limit()
-        url = f"{self.baseurl}/assets/?buIds={self.bu_id}"
-        response = self.session.get(url)
-        response.raise_for_status()
-        return response.json()
+        if len(self.assets) == 0:
+            self._rate_limit()
+            url = f"{self.baseurl}/assets/?buIds={self.bu_id}"
+            response = self.session.get(url)
+            response.raise_for_status()
+            self.assets = response.json()
+        return self.assets
 
     def update_asset(self, asset_id: int, update_data: dict, notify: bool = False) -> bool:
         """Update an asset with the provided data."""
+        assetdata = None
+        for a in self.get_assets():
+            if a['id'] == asset_id:
+                assetdata = a
+        # Add all required fields to update_data if not already present
+        for s in ["buId", "groupId", "label", "status"]: 
+            if s not in update_data:
+                update_data.update({s: assetdata[s]})
+        
         self._rate_limit()
         url = f"{self.baseurl}/assets/{asset_id}"
         params = {'notifyRadio': str(notify).lower()}

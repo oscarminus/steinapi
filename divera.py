@@ -103,7 +103,7 @@ if __name__ == "__main__":
                         'status' : FMSSTEIN[data_divera['fmsstatus']],
                         'comment' : data_divera['fmsstatus_note']
                     }
-                    s.updateAsset(data_stein['id'], payload)
+                    s.update_asset(data_stein['id'], payload)
 
             elif args.direction == 'divera':
                 # Überschreibe Daten in Divera
@@ -118,6 +118,6 @@ if __name__ == "__main__":
                     'status' : FMSSTEIN[data_divera['fmsstatus']],
                     'comment' : data_divera['fmsstatus_note']
                 }
-                s.updateAsset(data_stein['id'], payload)
+                s.update_asset(data_stein['id'], payload)
         else:
             logging.info("Eintrag unverändert")

@@ -96,12 +96,10 @@ if __name__ == "__main__":
             else:
                 logging.info("Neue Daten in Divera: Fahrzeug %s, Status Divera %s, Status Stein %s, Text Divera '%s', Text Stein '%s'" %
                              (data_divera['name'], data_divera['fmsstatus'], data_stein['status'], data_divera['fmsstatus_note'], data_stein['comment']))
-                logging.info("Keine Übertragung wegen Auth-Err (Mail v. Tom 24.02.2025 17:18)")
-                # Uncomment if API update to Stein is allowed again:
-                # payload = {
-                #     'status': FMSSTEIN[data_divera['fmsstatus']],
-                #     'comment': data_divera['fmsstatus_note']
-                # }
-                # s.update_asset(data_stein['id'], payload)
+                payload = {
+                    'status': FMSSTEIN[data_divera['fmsstatus']],
+                    'comment': data_divera['fmsstatus_note']
+                }
+                s.update_asset(data_stein['id'], payload)
         else:
             logging.info("Eintrag unverändert")
